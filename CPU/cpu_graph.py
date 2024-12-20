@@ -1,1 +1,2 @@
-print("CPU Graph Here")
+#!/bin/python3
+print("CPU Graph Here");
