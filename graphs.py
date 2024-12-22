@@ -1,6 +1,9 @@
+import tkinter as tk
+from tkinter import ttk
 import psutil
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from collections import deque
 
 # Initialize deque for real-time data
@@ -9,25 +12,28 @@ cpu_data = deque([0] * history_length, maxlen=history_length)
 memory_data = deque([0] * history_length, maxlen=history_length)
 disk_data = deque([0] * history_length, maxlen=history_length)
 network_data = deque([0] * history_length, maxlen=history_length)
-ethernet_data = deque([0] * history_length, maxlen=history_length)
 
-# Set up the plot
-fig, (ax_cpu, ax_memory, ax_disk, ax_network) = plt.subplots(4, 1, figsize=(10, 10))
+# Create a Tkinter window
+root = tk.Tk()
+root.title("System Resource Monitoring")
+root.geometry("800x600")
+
+# Set up the Matplotlib figure
+fig, (ax_cpu, ax_memory, ax_disk, ax_network) = plt.subplots(4, 1, figsize=(8, 8))
 fig.suptitle("System Resource Monitoring")
+
+# Embed the figure in the Tkinter window
+canvas = FigureCanvasTkAgg(fig, master=root)
+canvas_widget = canvas.get_tk_widget()
+canvas_widget.pack(fill=tk.BOTH, expand=True)
 
 def update(frame):
     # Get current system stats
     cpu_data.append(psutil.cpu_percent())
     memory_data.append(psutil.virtual_memory().percent)
     disk_data.append(psutil.disk_usage('/').percent)
-
-    # Calculate network usage (bytes sent and received per second)
     net_io = psutil.net_io_counters()
     network_data.append((net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024))  # MB/s
-
-    # Calculate Ethernet usage if available
-    ethernet_counters = psutil.net_if_stats().get('Ethernet')
-    ethernet_data.append(ethernet_counters.speed if ethernet_counters else 0)
 
     # Update CPU plot
     ax_cpu.clear()
@@ -53,14 +59,16 @@ def update(frame):
     # Update Network plot
     ax_network.clear()
     ax_network.plot(network_data, label="Network Usage (MB/s)", color="purple")
-    ax_network.plot(ethernet_data, label="Ethernet Speed (Mbps)", color="orange")
-    ax_network.set_ylim(0, max(max(network_data), max(ethernet_data), 1) * 1.2)
+    ax_network.set_ylim(0, max(max(network_data), 1) * 1.2)
     ax_network.set_title("Network Usage")
     ax_network.legend()
 
-# Animate the plots
+    # Redraw the canvas
+    canvas.draw()
+
+# Set up the animation
 ani = animation.FuncAnimation(fig, update, interval=1000)
 
-# Display the plot
-plt.tight_layout()
-plt.show()
+# Start the Tkinter main loop
+root.mainloop()
+

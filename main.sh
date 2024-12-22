@@ -5,10 +5,13 @@ while true; do
     selection=$(zenity --list \
         --title="Task Manager" \
         --text="Select a resource to monitor:" \
-        --column="Options" "CPU" "GPU" "Disk" "Memory" "Network" "Exit")
+        --column="Options" "Graphs" "CPU" "GPU" "Disk" "Memory" "Network" "Exit")
 
     # Handle user selection
     case $selection in
+        "Graphs")
+            python graphs.py
+            ;;
         "CPU")
             ./CPU/cpu_graph.py
             ./CPU/cpu_info.sh
